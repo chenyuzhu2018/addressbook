@@ -6,87 +6,74 @@
 		<title></title>
 		<link rel="stylesheet" href="styles/demo.css" />
 	</head>
-
+	<script src="js/vue.js"></script>
 	<body>
 		<div id="app">
 
 			<fieldset>
 				<legend>
-					Create New Person
+					添加联系人
 				</legend>
 				<div class="form-group">
-					<label>Name:</label>
+					<label>姓名:</label>
 					<input type="text" v-model="newPerson.name"/>
 				</div>
 				<div class="form-group">
-					<label>Age:</label>
-					<input type="text" v-model="newPerson.age"/>
+					<label>电话:</label>
+					<input type="text" v-model="newPerson.phoneNumber"/>
 				</div>
 				<div class="form-group">
-					<label>Sex:</label>
+					<label>性别:</label>
 					<select v-model="newPerson.sex">
-					<option value="Male">Male</option>
-					<option value="Female">Female</option>
+					<option value="男">男性</option>
+					<option value="女">女性</option>
 				</select>
 				</div>
 				<div class="form-group">
 					<label></label>
-					<button @click="createPerson">Create</button>
+					<button @click="createPerson">添加</button>
 				</div>
 		</fieldset>
 		<table>
 			<thead>
 				<tr>
-					<th>Name</th>
-					<th>Age</th>
-					<th>Sex</th>
-					<th>Delete</th>
+					<th>姓名</th>
+					<th>电话</th>
+					<th>性别</th>
+					<th>删除</th>
 				</tr>
 			</thead>
 			<tbody>
-				<tr v-for="person in people">
+				<tr v-for="(person, index) in people">
 					<td>{{ person.name }}</td>
-					<td>{{ person.age }}</td>
+					<td>{{ person.phoneNumber }}</td>
 					<td>{{ person.sex }}</td>
-					<td :class="'text-center'"><button @click="deletePerson($index)">Delete</button></td>
+					<td :class="'text-center'"><button @click="deletePerson(index)">删除</button></td>
 				</tr>
 			</tbody>
 		</table>
 		</div>
 	</body>
-	<script src="js/vue.js"></script>
 	<script>
+    var peopleInfoList = [
+      { name: "赵孝军", phoneNumber: 185122123132, sex: "男"},
+      { name: "秦国海", phoneNumber: 186546546465, sex: "男"}
+    ]
 		var vm = new Vue({
 			el: '#app',
 			data: {
 				newPerson: {
 					name: '',
-					age: 0,
-					sex: 'Male'
+					phoneNumber: 0,
+					sex: "男"
 				},
-				people: [{
-					name: 'Jack',
-					age: 30,
-					sex: 'Male'
-				}, {
-					name: 'Bill',
-					age: 26,
-					sex: 'Male'
-				}, {
-					name: 'Tracy',
-					age: 22,
-					sex: 'Female'
-				}, {
-					name: 'Chris',
-					age: 36,
-					sex: 'Male'
-				}]
+				people: peopleInfoList
 			},
 			methods:{
 				createPerson: function(){
 					this.people.push(this.newPerson);
 					// 添加完newPerson对象后，重置newPerson对象
-					this.newPerson = {name: '', age: 0, sex: 'Male'}
+					this.newPerson = {name: '', phoneNumber: 0, sex: "男"}
 				},
 				deletePerson: function(index){
 					// 删一个数组元素
