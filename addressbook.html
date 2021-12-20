@@ -6,7 +6,7 @@
 		<title></title>
 		<link rel="stylesheet" href="styles/demo.css" />
 	</head>
-	<script src="js/vue.js"></script>
+	<script src="js/2.6.14/vue.js"></script>
 	<body>
 		<div id="app">
 
@@ -34,6 +34,9 @@
 					<button @click="createPerson">添加</button>
 				</div>
 		</fieldset>
+    <div class="form-group">
+      Search <input type="text" placeholder="搜索者姓名" v-model="searchData" />
+    </div>
 		<table>
 			<thead>
 				<tr>
@@ -44,7 +47,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				<tr v-for="(person, index) in people">
+				<tr v-for="(person, index) in filterdPeople ">
 					<td>{{ person.name }}</td>
 					<td>{{ person.phoneNumber }}</td>
 					<td>{{ person.sex }}</td>
@@ -53,21 +56,32 @@
 			</tbody>
 		</table>
 		</div>
+    <!--搜索组件实现-->
 	</body>
 	<script>
-    var peopleInfoList = [
-      { name: "赵孝军", phoneNumber: 185122123132, sex: "男"},
-      { name: "秦国海", phoneNumber: 186546546465, sex: "男"}
-    ]
+      // 注册搜索组件
+/*    	Vue.component('simple-grid', {
+			template: '#grid-template',
+			props: {
+				data: Array,
+				columns: Array,
+				filterKey: String
+			}
+		})
+    */
 		var vm = new Vue({
 			el: '#app',
 			data: {
+        searchData: '',
 				newPerson: {
 					name: '',
 					phoneNumber: 0,
 					sex: "男"
 				},
-				people: peopleInfoList
+				people: [
+          { name: "赵孝军", phoneNumber: 185122123132, sex: "男"},
+          { name: "秦国海", phoneNumber: 186546546465, sex: "男"}
+        ]
 			},
 			methods:{
 				createPerson: function(){
@@ -79,7 +93,15 @@
 					// 删一个数组元素
 					this.people.splice(index,1);
 				}
-			}
+			},
+      computed: {
+        filterdPeople: function(){
+          var self = this;
+          return self.people.filter(function(people){
+            return people.name.indexOf(self.searchData) !== -1
+          })
+        }
+      }
 		})
 	</script>
 
