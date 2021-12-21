@@ -48,12 +48,12 @@
 						<!--
 						<tr v-for="(index,entry) in dataList | filterBy searchKey">
 						-->
-						<tr v-for="(entry,index) in filterdPeople">	
+						<tr v-for="(people,index) in filterdPeople">	
 							<td v-for="col in columns">
-								{{entry[col.name]}}
+								{{people[col.name]}}
 							</td>
 							<td class="text-center">
-								<button class="btn-danger" @click="deleteItem(entry)">删除</button>
+								<button class="btn-danger" @click="deleteItem(people)">删除</button>
 							</td>
 						</tr>
 					</tbody>
@@ -101,6 +101,8 @@
 		<script src="js/1.0.25/vue.js"></script>
 		-->
 		<script>
+//			import eventHub from './js/EventHub'
+//			EventHub.install(Vue);
 			Vue.component('simple-grid', {
 				template: '#grid-template',
 				data: function() {
@@ -121,20 +123,22 @@
 							// 初始化this.item
 						this.item = {}
 							// 广播事件，showDialog是modal-dialog组件的一个方法，传入参数true表示显示对话框
-						this.$broadcast('showDialog', true)
+						//this.$broadcast('showDialog', true)
+						eventHub.$emit('show-dialog', true)
 					},
 					createItem: function() {
 						// 将item追加到dataList
 						this.dataList.push(this.item)
 							// 广播事件，传入参数false表示隐藏对话框
-						this.$broadcast('showDialog', false)
+						//this.$broadcast('showDialog', false)
+						eventHub.$emit('show-dialog', false)
 							// 新建完数据后，重置item对象
 						this.item = {}
 					},
-					deleteItem: function(entry) {
+					deleteItem: function(people) {
 						var data = this.dataList
 						data.forEach(function(item, i) {
-							if(item === entry) {
+							if(item === people) {
 								data.splice(i, 1)
 								return
 							}
@@ -165,6 +169,12 @@
 						 * item是由simple-dialog传下来，用于绑定表单字段的
 						 */
 						props: ['mode', 'title', 'fields', 'item'],
+						created: function () {
+							eventHub.$on('show-dialog', this.showDialog)
+							},
+						beforeDestroy: function () {
+							eventHub.$off('show-dialog', this.showDialog)
+						},
 						methods: {
 							close: function() {
 								this.show = false
@@ -174,11 +184,15 @@
 									this.$dispatch('create-item')
 							}
 						},
+						/*						
 						events: {
 							'showDialog': function(show) {
 								this.show = show
 							}
-						}
+						},*/
+						showDialog: function (show) {
+							this.show = show
+						}	
 					}
 				}
 			})
