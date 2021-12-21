@@ -48,7 +48,7 @@
 						<!--
 						<tr v-for="(index,entry) in dataList | filterBy searchKey">
 						-->
-						<tr v-for="(entry,index) in dataList">	
+						<tr v-for="(entry,index) in filterdPeople">	
 							<td v-for="col in columns">
 								{{entry[col.name]}}
 							</td>
@@ -145,7 +145,7 @@
 					filterdPeople: function(){
 						var self = this;
 						return self.dataList.filter(function(dataList){
-							return people.name.indexOf(self.searchKey) !== -1
+							return dataList.名字.indexOf(self.searchKey) !== -1
 						})
 					}
 				},
