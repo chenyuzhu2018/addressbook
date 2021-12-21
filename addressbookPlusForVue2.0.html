@@ -169,13 +169,20 @@
 						 * item是由simple-dialog传下来，用于绑定表单字段的
 						 */
 						props: ['mode', 'title', 'fields', 'item'],
+						/*						
 						created: function () {
 							this.$root.eventHub.$on('show-dialog', this.showDialog)
 						},
 						beforeDestroy: function () {
 							this.$root.eventHub.$off('show-dialog', this.showDialog)
 						},
-						
+						*/
+						mounted(){
+							this.$root.eventHub.$on('show-dialog', (data)=>{
+								console.log('接受到的参数：'+data)
+								this.show = data
+							} )
+						},
 						methods: {
 							close: function() {
 								this.show = false
