@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<link rel="stylesheet" href="styles/addressbookPlus.css" />
+		<style>
+			/* 
+			 * 由于IE不支持<template>标签，所以template标签中的内容在IE下会直接显示出来。
+			 * 将模板设为隐藏即可解决这个问题，template标签各浏览器支持请参考：http://caniuse.com/#feat=template
+			 */
+			#grid-template, #dialog-template{
+				display: none;
+			}
+		</style>		
+	</head>
+
+	<body>
+		<div id="app">
+			<div class="container">
+				<div class="form-group">
+					<label>搜索</label>
+					<input type="text" class="search-input" v-model="searchQuery" />
+				</div>
+
+			</div>
+			<div class="container">
+				<simple-grid :data-list="people" :columns="columns" :search-key="searchQuery">
+				</simple-grid>
+			</div>
+		</div>
+
+		<template id="grid-template">
+			<div>
+				<table>
+					<thead>
+						<tr>
+							<th v-for="col in columns">
+								{{ col.name }}
+							</th>
+							<th>
+								删除
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						<!--
+						<tr v-for="(index,entry) in dataList | filterBy searchKey">
+						-->
+						<tr v-for="(entry,index) in dataList">	
+							<td v-for="col in columns">
+								{{entry[col.name]}}
+							</td>
+							<td class="text-center">
+								<button class="btn-danger" @click="deleteItem(entry)">删除</button>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				<div class="container">
+					<button @click="openNewItemDialog('添加新联系人')">添加联系人</button>
+				</div>
+
+				<modal-dialog :mode="mode" :title="title" :fields="columns" :item="item" v-on:create-item="createItem">
+				</modal-dialog>
+			</div>
+		</template>
+
+		<template id="dialog-template">
+			<div class="dialogs">
+				<div class="dialog" v-bind:class="{ 'dialog-active': show }">
+					<div class="dialog-content">
+						<header class="dialog-header">
+							<h1 class="dialog-title">{{ title }}</h1>
+						</header>
+						<div class="dialog-body">
+							<div v-for="field in fields" class="form-group">
+								<label>{{ field.name }}</label>
+								<select v-if="field.dataSource" v-model="item[field.name]">
+									<option v-for="opt in field.dataSource" :value="opt">{{ opt }}</option>
+								</select>
+								<input v-else type="text" v-model="item[field.name]">
+							</div>
+						</div>
+						<footer class="dialog-footer">
+							<div class="form-group">
+								<label></label>
+								<button class="btn-save" v-on:click="save">保存</button>
+								<button class="btn-close" v-on:click="close">关闭</button>
+							</div>
+						</footer>
+					</div>
+				</div>
+				<div class="dialog-overlay"></div>
+			</div>
+		</template>
+
+		<script src="js/2.6.14/vue.js"></script>
+		<!--
+		<script src="js/1.0.25/vue.js"></script>
+		-->
+		<script>
+			Vue.component('simple-grid', {
+				template: '#grid-template',
+				data: function() {
+					return {
+						mode: 0,
+						title: '',
+						item: {}
+					}
+				},
+				props: ['dataList', 'columns', 'searchKey'],
+				methods: {
+
+					openNewItemDialog: function(title) {
+						// 对话框的标题
+						this.title = title
+							// mode = 1表示新建模式
+						this.mode = 1
+							// 初始化this.item
+						this.item = {}
+							// 广播事件，showDialog是modal-dialog组件的一个方法，传入参数true表示显示对话框
+						this.$broadcast('showDialog', true)
+					},
+					createItem: function() {
+						// 将item追加到dataList
+						this.dataList.push(this.item)
+							// 广播事件，传入参数false表示隐藏对话框
+						this.$broadcast('showDialog', false)
+							// 新建完数据后，重置item对象
+						this.item = {}
+					},
+					deleteItem: function(entry) {
+						var data = this.dataList
+						data.forEach(function(item, i) {
+							if(item === entry) {
+								data.splice(i, 1)
+								return
+							}
+						})
+					}
+				},
+				computed: {
+					filterdPeople: function(){
+						var self = this;
+						return self.dataList.filter(function(dataList){
+							return people.name.indexOf(self.searchKey) !== -1
+						})
+					}
+				},
+				components: {
+					'modal-dialog': {
+						template: '#dialog-template',
+						data: function() {
+							return {
+								// 对话框默认是不显示的
+								show: false
+							}
+						},
+						/*
+						 * mode = 1是新增数据模式，mode = 2是修改数据模式
+						 * title表示对话框的标题内容
+						 * fields表示对话框要显示的数据字段数组
+						 * item是由simple-dialog传下来，用于绑定表单字段的
+						 */
+						props: ['mode', 'title', 'fields', 'item'],
+						methods: {
+							close: function() {
+								this.show = false
+							},
+							save: function() {
+								if (this.mode === 1) //新建模式
+									this.$dispatch('create-item')
+							}
+						},
+						events: {
+							'showDialog': function(show) {
+								this.show = show
+							}
+						}
+					}
+				}
+			})
+
+			var demo = new Vue({
+				el: '#app',
+				data: {
+					searchQuery: '',
+					columns: [{
+						name: '名字',
+						isKey: true
+					}, {
+						name: '电话号'
+					}, {
+						name: '性别',
+						dataSource: ['男', '女']
+					}],
+					people: [{
+						名字: '秦国海',
+						电话号: 1231231,
+						性别: '男'
+					}, {
+						名字: '赵孝军',
+						电话号: 12313,
+						性别: '男'
+					}]
+				}
+			})
+		</script>
+
+	</body>
+
+</html>
