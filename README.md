@@ -69,3 +69,4 @@ filterdPeople: function(){
     </div>
 </template>
 ```
+#### 4、vue2.0组件模板必须只有一个根节点，vue1.0可以多个

@@ -92,7 +92,7 @@ button:focus {
 	max-width: 640px;
 }
 
-.btn-danger{
+.btn-delete{
 	padding: 5px 15px;
 	border: 1px solid salmon;
 	background: salmon;
@@ -165,7 +165,7 @@ button:focus {
 /*overflow 属性规定当内容溢出元素框时发生的事情*/
 .dialog-active ~ .dialog-overlay {
 	opacity: 1;
-	visibility: visible;
+	visibility: hidden;
 }
 
 .dialog-content {
