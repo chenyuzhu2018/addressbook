@@ -16,7 +16,7 @@ body{
 table,
 td,
 th {
-	border-collapse: collapse;
+	border-collapse: collapse;/*collapse 如果可能，边框会合并为一个单一的边框。会忽略 border-spacing 和 empty-cells 属性。*/
 	border-spacing: 0
 }
 
@@ -70,7 +70,7 @@ input[type=text]:focus {
 button {
 	display: inline-block;
 	box-sizing: border-box;
-	padding: 10px 30px;
+	padding: 10px 30px;/*上内边距和下内边距是 10px右内边距和左内边距是 30px*/
 	background: #0090d3;
 	color: #fff;
 	border: 1px solid #0090d3;
