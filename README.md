@@ -70,3 +70,8 @@ filterdPeople: function(){
 </template>
 ```
 #### 4、vue2.0去掉了dispatch
+#### 5、下载vue-resource-1.5.3地址
+https://github.com/pagekit/vue-resource/releases
+https://github.com/pagekit/vue-resource/releases/tag/1.5.3
+
+- 后面可熟悉下使用axios的http请求， 
