@@ -5,6 +5,7 @@
 		<meta charset="UTF-8">
 		<title></title>
 		<link rel="stylesheet" href="styles/addressbookPlus.css" />
+		<link rel="stylesheet" href="fonts/iconfont.css" />
 		<style>
 			/* 
 			 * 由于IE不支持<template>标签，所以template标签中的内容在IE下会直接显示出来。
@@ -19,77 +20,81 @@
 	<body>
 		<div id="app">
 			<div class="container">
-				<div class="form-group">
-					<label>搜索</label>
-					<input type="text" class="search-input" v-model="searchQuery" />
-				</div>
-
-			</div>
-			<div class="container">
-				<simple-grid :data-list="people" :columns="columns" :search-key="searchQuery">
+				<simple-grid :data-list="gridData" :columns="gridColumns" 
+					v-on:load-entry="loadCustomer" 
+					v-on:delete-entry="deleteCustomer">
 				</simple-grid>
 			</div>
+			<div class="container">
+				<div class="form-group">
+					<button @click="this.show = true">新建联系人</button>
+				</div>
+			</div>
+
+			<modal-dialog v-bind:show.sync="show">
+
+				<header class="dialog-header" slot="header">
+					<h1 class="dialog-title">新建联系人</h1>
+				</header>
+
+				<div class="dialog-body" slot="body">
+					<div class="form-group">
+						<label>名字</label>
+						<input type="text" v-model="item.name" />
+					</div>
+
+					<div class="form-group">
+						<label>电话号</label>
+						<input type="text" v-model="item.phone" />
+					</div>
+
+					<div class="form-group">
+						<label>性别</label>
+						<input type="text" v-model="item.gender" />
+					</div>
+					<div class="form-group">
+						<label></label>
+						<button @click="saveCustomer">Save</button>
+					</div>
+				</div>
+
+			</modal-dialog>
 		</div>
 
 		<template id="grid-template">
-			<div>
-				<table>
-					<thead>
-						<tr>
-							<th v-for="col in columns">
-								{{ col.name }}
-							</th>
-							<th>
-								删除
-							</th>
-						</tr>
-					</thead>
-					<tbody>
-						<!--
-						<tr v-for="(index,entry) in dataList | filterBy searchKey">
-						-->
-						<tr v-for="(people,index) in filterdPeople">	
-							<td v-for="col in columns">
-								{{people[col.name]}}
-							</td>
-							<td class="text-center">
-								<button class="btn-delete" @click="deleteItem(people)">删除</button>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-				<div class="container">
-					<button @click="openNewItemDialog('添加新联系人')">添加联系人</button>
-				</div>
-
-				<modal-dialog :mode="mode" :title="title" :fields="columns" :item="item" v-on:create-item="createItem">
-				</modal-dialog>
-			</div>
+			<table>
+				<thead>
+					<tr>
+						<th v-for="col in columns">
+							{{ col.name}}
+						</th>
+						<th>Delete</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr v-for="(index,entry) in dataList">
+						<td v-for="col in columns">
+							<span v-if="col.isKey"><a href="javascript:void(0)" @click="loadEntry(entry[col.name])">{{ entry[col.name] }}</a></span>
+							<span v-else>{{ entry[col.name] }}</span>
+						</td>
+						<td>
+							<button class="btn-danger" @click="deleteEntry(entry)">delete</button>
+						</td>
+					</tr>
+				</tbody>
+			</table>
 		</template>
 
 		<template id="dialog-template">
 			<div class="dialogs">
 				<div class="dialog" v-bind:class="{ 'dialog-active': show }">
 					<div class="dialog-content">
-						<header class="dialog-header">
-							<h1 class="dialog-title">{{ title }}</h1>
-						</header>
-						<div class="dialog-body">
-							<div v-for="field in fields" class="form-group">
-								<label>{{ field.name }}</label>
-								<select v-if="field.dataSource" v-model="item[field.name]">
-									<option v-for="opt in field.dataSource" :value="opt">{{ opt }}</option>
-								</select>
-								<input v-else type="text" v-model="item[field.name]">
-							</div>
+						<div class="close rotate">
+							<span class="iconfont icon-close" @click="close"></span>
 						</div>
-						<footer class="dialog-footer">
-							<div class="form-group">
-								<label></label>
-								<button class="btn-save" v-on:click="save">保存</button>
-								<button class="btn-close" v-on:click="close">关闭</button>
-							</div>
-						</footer>
+						<slot name="header"></slot>
+						<slot name="body"></slot>
+						<slot name="footer"></slot>
 					</div>
 				</div>
 				<div class="dialog-overlay"></div>
@@ -97,162 +102,144 @@
 		</template>
 
 		<script src="js/2.6.14/vue.js"></script>
-		<!--
-		<script src="js/1.0.25/vue.js"></script>
-		-->
+		<script src="js/vue_resource/vue-resource.js"></script>
 		<script>
-//			import eventHub from './js'
-//			EventHub.install(Vue);
 			Vue.component('simple-grid', {
 				template: '#grid-template',
-				data: function() {
-					return {
-						mode: 0,
-						title: '',
-						item: {}
-					}
-				},
-				props: ['dataList', 'columns', 'searchKey'],
-				created: function () {
-							//this.$root.eventHub.$on('show-dialog', this.showDialog)
-							this.$root.eventHub.$on('create-item', (data)=>{
-								// 将item追加到dataList
-								this.dataList.push(this.item)
-								// 广播事件，传入参数false表示隐藏对话框
-								//this.$broadcast('showDialog', false)
-								this.$root.eventHub.$emit('show-dialog', false)
-								// 新建完数据后，重置item对象
-								this.item = {}
-							} )
-						},
+				props: ['dataList', 'columns'],
 				methods: {
-
-					openNewItemDialog: function(title) {
-						// 对话框的标题
-						this.title = title
-							// mode = 1表示新建模式
-						this.mode = 1
-							// 初始化this.item
-						this.item = {}
-							// 广播事件，showDialog是modal-dialog组件的一个方法，传入参数true表示显示对话框
-						//this.$broadcast('showDialog', true)
-						this.$root.eventHub.$emit('show-dialog', true)
+					loadEntry: function(key) {
+						this.$root.eventHub.$emit('load-entry', key)
 					},
-					createItem: function() {
-						// 将item追加到dataList
-						this.dataList.push(this.item)
-							// 广播事件，传入参数false表示隐藏对话框
-						//this.$broadcast('showDialog', false)
-						this.$root.eventHub.$emit('show-dialog', false)
-							// 新建完数据后，重置item对象
-						this.item = {}
-					},
-					deleteItem: function(people) {
-						var data = this.dataList
-						data.forEach(function(item, i) {
-							if(item === people) {
-								data.splice(i, 1)
-								return
-							}
-						})
-					}
-				},
-				computed: {
-					filterdPeople: function(){
-						var self = this;
-						return self.dataList.filter(function(dataList){
-							return dataList.名字.indexOf(self.searchKey) !== -1
-						})
-					}
-				},
-				components: {
-					'modal-dialog': {
-						template: '#dialog-template',
-						data: function() {
-							return {
-								// 对话框默认是不显示的
-								show: false
-							}
-						},
-						/*
-						 * mode = 1是新增数据模式，mode = 2是修改数据模式
-						 * title表示对话框的标题内容
-						 * fields表示对话框要显示的数据字段数组
-						 * item是由simple-grid传下来，用于绑定表单字段的
-						 */
-						props: ['mode', 'title', 'fields', 'item'],
-												
-						created: function () {
-							//this.$root.eventHub.$on('show-dialog', this.showDialog)
-							this.$root.eventHub.$on('show-dialog', (data)=>{
-								console.log('接受到的参数：'+data)
-								this.show = data
-							} )
-						},
-						
-						// beforeDestroy: function () {
-						// 	this.$root.eventHub.$off('show-dialog', this.showDialog)
-						// },
-						
-						/*
-						mounted: function(){
-							this.$root.eventHub.$on('show-dialog', (data)=>{
-								console.log('接受到的参数：'+data)
-								this.show = data
-							} )
-						},*/
-						methods: {
-							close: function() {
-								this.show = false
-							},
-							save: function() {
-								if (this.mode === 1) //新建模式
-								{
-									//this.$dispatch('create-item')
-									this.$root.eventHub.$emit('create-item')
-								}
-							}
-						},
-						/*						
-						events: {
-							'showDialog': function(show) {
-								this.show = show
-							}
-						},*/
-						showDialog: function (show) {
-							this.show = show
-						}	
+					deleteEntry: function(entry) {
+						this.$root.eventHub.$emit('delete-entry', entry)
 					}
 				}
 			})
+
+			Vue.component('modal-dialog', {
+				template: '#dialog-template',
+				props: ['show'],
+				methods: {
+					close: function() {
+						this.show = false
+					}
+				}
+			})
+		</script>
+		<script>
 
 			var demo = new Vue({
 				el: '#app',
 				data: {
 					eventHub: new Vue(),
-					searchQuery: '',
-					columns: [{
-						name: '名字',
+					show: false,
+					title: '',
+					gridColumns: [{
+						name: 'name',
 						isKey: true
 					}, {
-						name: '电话号'
+						name: 'phone'
 					}, {
-						name: '性别',
+						name: 'gender',
 						dataSource: ['男', '女']
 					}],
-					people: [{
-						名字: '秦国海',
-						电话号: 1231231,
-						性别: '男'
-					}, {
-						名字: '赵孝军',
-						电话号: 12313,
-						性别: '男'
-					}]
+					gridData: [],
+					apiUrl: 'http://211.149.193.19:8080/api/customers',
+					item: {}
+				},
+				ready: function() {
+					this.getCustomers()
+				},
+				created: function () {
+							this.$root.eventHub.$on('load-entry', (customerId)=>{
+								var vm = this
+								vm.gridData.forEach(function(item) {
+								if (item.customerId === customerId) {
+								vm.$set('item', item)
+								vm.$set('show', true)
+								return
+							}
+						})
+							} ),
+							this.$root.eventHub.$on('delete-entry', (customer)=>{
+								var resource = this.$resource(this.apiUrl)
+								vm = this
+								
+								resource.remove({ id: customer.customerId})
+								.then((response) => {
+									vm.getCustomers()
+								})
+							} )
+						},
+				methods: {
+					closeDialog: function() {
+						this.show = false
+					},
+					// loadCustomer: function(customerId) {
+					// 	var vm = this
+					// 	vm.gridData.forEach(function(item) {
+					// 		if (item.customerId === customerId) {
+					// 			vm.$set('item', item)
+					// 			vm.$set('show', true)
+					// 			return
+					// 		}
+					// 	})
+					// },
+					saveCustomer: function() {
+						this.item.customerId ? this.updateCustomer() : this.createCustomer()
+						this.show = false
+					},
+					getCustomers: function() {
+
+						var resource = this.$resource(this.apiUrl)
+							vm = this
+
+						resource.get()
+							.then((response) => {
+								vm.$set('gridData', response.data)
+							})
+							.catch(function(response) {
+								console.log(response)
+							})
+					},
+					createCustomer: function() {
+						var resource = this.$resource(this.apiUrl)
+							vm = this
+						
+						resource.save(vm.apiUrl, vm.item)
+							.then((response) => {
+								vm.$set('item', {})
+								vm.getCustomers()
+							})
+						this.show = false
+					},
+					updateCustomer: function() {
+						var resource = this.$resource(this.apiUrl)
+							vm = this
+							
+						resource.update({ id: vm.item.customerId}, vm.item)
+							.then((response) => {
+								vm.getCustomers()
+							})
+					},
+					deleteCustomer: function(customer){
+						var resource = this.$resource(this.apiUrl)
+							vm = this
+							
+						resource.remove({ id: customer.customerId})
+							.then((response) => {
+								vm.getCustomers()
+							})
+					}
+				}
+			})
+			demo.$watch('show', function(newVal, oldVal) {
+				if (!newVal) {
+					this.item = {}
 				}
 			})
 		</script>
-
 	</body>
 
 </html>

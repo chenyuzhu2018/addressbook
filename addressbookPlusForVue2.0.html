@@ -97,6 +97,7 @@
 		</template>
 
 		<script src="js/2.6.14/vue.js"></script>
+		<script src="js/vue_resource/vue-resource.js"></script>
 		<!--
 		<script src="js/1.0.25/vue.js"></script>
 		-->
@@ -109,15 +110,23 @@
 					return {
 						mode: 0,
 						title: '',
-						item: {}
+						item: {},
+						creatPeopleUrl: 'http://211.149.193.19:8080/api/creatPeople',
+						removePeopleUrl: 'http://211.149.193.19:8080/api/removePeople'
 					}
 				},
 				props: ['dataList', 'columns', 'searchKey'],
 				created: function () {
 							//this.$root.eventHub.$on('show-dialog', this.showDialog)
+							vm = this
 							this.$root.eventHub.$on('create-item', (data)=>{
 								// 将item追加到dataList
 								this.dataList.push(this.item)
+								
+								// 创建联系人到服务端
+								this.createPeople()// 回调函数里面的this 是什么和下面的区别
+								//vm.createPeople()
+								
 								// 广播事件，传入参数false表示隐藏对话框
 								//this.$broadcast('showDialog', false)
 								this.$root.eventHub.$emit('show-dialog', false)
@@ -155,6 +164,23 @@
 								return
 							}
 						})
+						//从服务端删除
+						var resource = this.$resource(this.removePeopleUrl)
+						vm = this
+							
+						resource.remove({ id: customer.customerId})
+							.then((response) => {
+								//vm.getCustomers()
+							})
+					},
+					createPeople: function() {
+						var resource = this.$resource(this.creatPeopleUrl)
+						vm = this	
+						resource.save(vm.creatPeopleUrl, vm.item)
+							.then((response) => {
+								//vm.$set('item', {})
+								//vm.getCustomers()
+							})
 					}
 				},
 				computed: {
@@ -248,7 +274,27 @@
 						名字: '赵孝军',
 						电话号: 12313,
 						性别: '男'
-					}]
+					}],
+					apiUrl: 'http://211.149.193.19:8080/api/getPepples'
+				},
+				ready: function() {
+					// 加载通讯录时所有人
+					this.getPeoples()
+				},
+				methods: {
+					getPeoples: function() {
+						var resource = this.$resource(this.apiUrl)
+							vm = this
+
+						resource.get()
+							.then((response) => {
+								vm.$set('people', response.data)
+								//people = response.data
+							})
+							.catch(function(response) {
+								console.log(response)
+							})
+					}
 				}
 			})
 		</script>
